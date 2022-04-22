@@ -1,0 +1,41 @@
+---
+# tasks file for ansible-cisco-anyconnect
+
+# Cisco Any Connect
+- name: Install a list of packages
+  apt:
+    pkg:
+    - certbot
+    - lib32z1
+    - libc6-i386
+    - libnss3
+    - libnss3-tools
+    - libpkcs11-helper1
+    - net-tools
+    - network-manager-openconnect
+    - network-manager-openconnect-gnome
+    - openconnect
+    - openvpn
+    - vpnc-scripts
+  when: ansible_os_family == 'Debian'
+  tags: anyconnect
+
+- name: Unarchive anyconnect
+  ansible.builtin.unarchive:
+    src: https://uci.service-now.com/sys_attachment.do?sys_id=1507c0cc1b200dd44d61baeedc4bcbe9
+    dest: /tmp/
+    remote_src: yes
+    extra_opts:
+    - --strip-components=1
+  tags: anyconnect
+
+- name: Install anyconnect
+  shell: "echo y | /tmp/vpn/vpn_install.sh"
+  args:
+    chdir: /tmp/vpn/
+  become: true
+  register: diff_cmd
+  failed_when: diff_cmd.rc >= 2
+  changed_when:
+    - diff_cmd.rc == 0
+  tags: anyconnect
